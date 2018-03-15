@@ -7,7 +7,7 @@ if __name__== "__main__":
     # dict of parameters for model from experiment
     # dt is 20 minutes and it is our new time constant
     #parameters = {'a':0.0014, 'b':0.175, 'e1':1, 'e2':10, 'k':0.15, 'dt':1}
-
+    
     # make data as list of dicts
     p1 = {'a':0.0014, 'b':0.087, 'e1':1, 'e2':1, 'k':0.15, 'dt':1}
     p2 = {'a':0.00055, 'b':0.087, 'e1':1, 'e2':10, 'k':0.15, 'dt':1}
@@ -29,20 +29,27 @@ if __name__== "__main__":
         a = 1
         betas = np.arange(0.1, 10, 1)
         gammas = np.arange(0.1, 10, 1)
+        ## mesh data
+        #B, G = np.meshgrid(betas, gammas)
+        #d1b, d2b = np.shape(B)
+        #d1g, d2g = np.shape(G)
+        #B_ = B.reshape((d1b*d2b, 1))
+        #G_ = G.reshape((d1g*d2g, 1))
+        #print(np.shape(gammas))
+        #errors = np.zeros((len(betas)*len(gammas)))
         errors = []
         i = 0
         for b in betas:
             for g in gammas:
-                print('iteration number {} beta is {} gamma is {}'.format(i, b, g))
-                error = plant.find_triangle_minimum(max_iteration_number = 25,show = False,\
-                alpha = a, beta = b, gamma = g)
+                print('iteration number {}'.format(i))
+                error = plant.find_conj_gradient_minimum(max_iteration_number = 25,show = False)
                 # just save all error data for science
                 errors.append(error)
                 i+=1
         # save results
         end = time.time()
         results = {'data':parameters, 'errors':errors, 'time':(end-start)}
-        with open('triangle_metaoptimize_{}.pickle'.format(i), 'wb') as f:
+        with open('conjugate_metaoptimize_{}.pickle'.format(i), 'wb') as f:
             pickle.dump(results, f)
-        with open('triangle_metaoptimize_double{}.pickle'.format(i), 'wb') as f:
+        with open('conjugate_metaoptimize_double{}.pickle'.format(i), 'wb') as f:
             pickle.dump(results, f)

@@ -10,9 +10,9 @@ import matplotlib.path
 import pickle
 import random
 
-def draw_triangle(axes, p1, p2, p3, color_ = 'r'):
+def draw_triangle(axes, p1, p2, p3_, color_ = 'r'):
 
-    polygon_1 = matplotlib.patches.Polygon([p1, p2, p3], fill = False, color=color_)
+    polygon_1 = matplotlib.patches.Polygon([p1, p2, p3_], fill = False, color=color_)
     axes.add_patch (polygon_1)
 
 #def metagradient_step(x1, x2, t, dx1, dx2, gamma):
@@ -108,7 +108,6 @@ class plant_model:
         y_grad = np.array([y_start])
         error = np.array((0, ))
         # gradient parameters
-        #gamma = 0.09
         dx1 = 0.1
         dx2 = 0.1
         for i in range(0, max_iteration_number):
@@ -126,7 +125,7 @@ class plant_model:
             # squared error calculation
             Fmin = np.min(ZZ_)
             Fnow = self.scalar_calc_functional(xg, yg, t)
-            er = (Fmin-Fnow)*(Fmin-Fnow)
+            er = (Fmin-Fnow)
             error = np.append(error, er)
             if(i%25==0 and show):
                 # plot all steps
@@ -325,12 +324,12 @@ class plant_model:
             func = self.vector_calc_fuctional(x1vec+l*S1vec, x2vec+l*S2vec, t+2*dt)
             n_min = np.argmin(func)
             lam = l[n_min]
-            print('lambda min is {}'.format(lam))
+            #print('lambda min is {}'.format(lam))
             x1_next = x1 + lam*S1_next
             x2_next = x2 + lam*S2_next
             return x1_next, x2_next, df1_next, df2_next, S1_next, S2_next
 
-    def find_conj_gradient_minimum(self, max_iteration_number = 100, x_start = 20, y_start = 20):
+    def find_conj_gradient_minimum(self, max_iteration_number = 100, x_start = 20, y_start = 20, show = True):
         '''
         find minimum of functional on our model parameters with
         conjugate gradient method
@@ -352,7 +351,8 @@ class plant_model:
         x_min = np.array((0, ))
         x_grad = np.array([x_start])
         y_grad = np.array([y_start])
-
+        error = np.array((0, ))
+        
         # conjugate gradient parameters
         dx1 = 0.1
         dx2 = 0.1
@@ -379,7 +379,12 @@ class plant_model:
             S2 = S2_n
             df1 = df1_n
             df2 = df2_n
-            if(i%25==0):
+            # error
+            F_now = self.scalar_calc_functional(xg, yg, t)
+            F_min = np.min(ZZ_)
+            er  = (F_now - F_min)
+            error = np.append(error, er)
+            if(i%25==0 and show):
                 # plot all steps
                 Z = ZZ_.reshape((len(T), len(E)))
                 fig=pl.figure()
@@ -395,23 +400,26 @@ class plant_model:
                 pl.plot(X_[n_min], Y_[n_min], "sk")
                 pl.grid()
                 pl.show()
-            print(x_grad[i], y_grad[i], t)
-            print(x_min[i],  y_min[i])
+            #print(x_grad[i], y_grad[i], t)
+            #print(x_min[i],  y_min[i])
             t = t + 5*self.param['dt']
+            
         # at the end of all iterations:
-        Z = ZZ_.reshape((len(T), len(E)))
-        fig=pl.figure()
-        cs = pl.contour(X, Y, Z, 20)
-        pl.clabel(cs, fmt = '%.1f', colors="black")
-        # Add a color bar which maps values to colors.
-        fig.colorbar(cs, shrink=0.5, aspect=5)
-        pl.plot(x_min, y_min, "-b")
-        pl.plot(x_grad, y_grad, "-or")
-        pl.plot(X_[n_min], Y_[n_min], "sk")
+        if(show):
+            Z = ZZ_.reshape((len(T), len(E)))
+            fig=pl.figure()
+            cs = pl.contour(X, Y, Z, 20)
+            pl.clabel(cs, fmt = '%.1f', colors="black")
+            # Add a color bar which maps values to colors.
+            fig.colorbar(cs, shrink=0.5, aspect=5)
+            pl.plot(x_min, y_min, "-b")
+            pl.plot(x_grad, y_grad, "-or")
+            pl.plot(X_[n_min], Y_[n_min], "sk")
 
-        pl.grid()
-        pl.savefig("growing.png")
-        pl.show()
+            pl.grid()
+            pl.savefig("growing.png")
+            pl.show()
+        return error
 
     def find_triangle_minimum(self, alpha, beta, gamma, max_iteration_number = 40, x_start = 20,\
         y_start = 20, show = True):
@@ -458,7 +466,7 @@ class plant_model:
             F_now = self.scalar_calc_functional(x_mid[0], x_mid[1], t)
             #F_min = self.scalar_calc_functional(X_[n_min], Y_[n_min], t)
             F_min = np.min(ZZ_)
-            er  = (F_now - F_min)*(F_now - F_min)
+            er  = (F_now - F_min)
             error = np.append(error, er)
             if(i%2==0 and show == True):
                 # plot all steps
@@ -563,7 +571,7 @@ if __name__ == "__main__":
     #plant.find_triangle_minimum(x_start = 5, y_start = 5)
     error = plant.find_triangle_minimum(x_start = 5, y_start = 5, show = False,\
     alpha = 1, beta = 0.5, gamma = 2.9)
-    #print(error)
+    print(error)
     #print(np.shape(error))
     # show squared errors by steps
     fig = pl.figure()
