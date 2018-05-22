@@ -13,11 +13,11 @@ if __name__== "__main__":
     plant = grow.plant_model(**parameters)
     # growing gradient method metaoptimization
     gammas = np.arange(0.01, 2.1, 0.1)
-    print(np.shape(gammas))
+    #print(np.shape(gammas))
     errors = []
     for i in range(len(gammas)):
         print('iteration number {}'.format(i))
-        error = plant.find_gradient_minimum(max_iteration_number = 50,show = False, gamma = gammas[i])
+        error = plant.find_gradient_minimum(max_iteration_number = 25,show = False, gamma = gammas[i])
         errors.append(np.mean(error))
     # show squared errors by steps
     fig = pl.figure()
