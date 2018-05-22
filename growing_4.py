@@ -44,20 +44,47 @@ class plant_model:
                 self.param.update({kw : default_params[kw]})
 
 
-    def scalar_calc_functional(self, x1, x2, t):
+    def noise_scalar_calc_functional(self, x1, x2, t):
         '''
-        calculates one value of functional F from point (x1, x2, t)
+        calculates one value of functional F from point (x1, x2, t) with noise
         '''
         a = self.param['a']
         b = self.param['b']
         k = self.param['k']
         e1 = self.param['e1']
         e2 = self.param['e2']
-        psy = random.uniform(-1, 1)
+        
         f = e1*(x1-(a*t+k*np.sin(b*t)))*(x1-(a*t+k*np.sin(b*t)))+ \
-        e2*(x2-(a*t+k*np.sin(b*t)))*(x2-(a*t+k*np.sin(b*t))) + psy
+        e2*(x2-(a*t+k*np.sin(b*t)))*(x2-(a*t+k*np.sin(b*t))) 
+        psy = random.uniform(-0.01*f, 0.01*f) 
+        f = f + psy
         return f
 
+    def noise_vector_calc_fuctional(self, X1, X2, t):
+        '''
+        for calculating grid in moment t- calculates vector of values F
+        from vector of points(x1, x2) and time point t with noise
+        '''
+        N = len(X1)
+
+        A = ((np.ones(N))*self.param['a']).reshape((np.shape(X1)))
+        B1 = ((np.ones(N))*self.param['b']).reshape((np.shape(X1)))
+        B2 = B1
+        E1 = ((np.ones(N))*self.param['e1']).reshape((np.shape(X1)))
+        E2 = ((np.ones(N))*self.param['e2']).reshape((np.shape(X1)))
+        K = ((np.ones(N))*self.param['k']).reshape((np.shape(X1)))
+        T = ((np.ones(N))*(t+self.param['dt'])).reshape((np.shape(X1)))
+        R1 = (X1 - (A*T+K*np.sin(B1*T)))
+        R2 = (X2 - (A*T+K*np.sin(B2*T)))
+        F = E1*R1*R1 + E2*R2*R2
+        psy = np.ones(N)
+        Max = np.mean(F)
+        for i in range(0, N):
+            psy[i] = (random.uniform(-0.01*Max, 0.01*Max))
+        PSY = ((np.ones(N)*psy).reshape(np.shape(X1)))
+        F = F + PSY
+        return F
+        
     def vector_calc_fuctional(self, X1, X2, t):
         '''
         for calculating grid in moment t- calculates vector of values F
@@ -74,12 +101,22 @@ class plant_model:
         T = ((np.ones(N))*(t+self.param['dt'])).reshape((np.shape(X1)))
         R1 = (X1 - (A*T+K*np.sin(B1*T)))
         R2 = (X2 - (A*T+K*np.sin(B2*T)))
-        psy = np.ones(N)
-        for i in range(0, N):
-            psy[i] = (random.uniform(-1, 1))
-        PSY = ((np.ones(N)*psy).reshape(np.shape(X1)))
-        F = E1*R1*R1 + E2*R2*R2 + PSY
+        F = E1*R1*R1 + E2*R2*R2
         return F
+        
+    def scalar_calc_functional(self, x1, x2, t):
+        '''
+        calculates one value of functional F from point (x1, x2, t)
+        '''
+        a = self.param['a']
+        b = self.param['b']
+        k = self.param['k']
+        e1 = self.param['e1']
+        e2 = self.param['e2']
+        
+        f = e1*(x1-(a*t+k*np.sin(b*t)))*(x1-(a*t+k*np.sin(b*t)))+ \
+        e2*(x2-(a*t+k*np.sin(b*t)))*(x2-(a*t+k*np.sin(b*t))) 
+        return f
 
     def show_2d(self):
         pass
@@ -127,7 +164,7 @@ class plant_model:
             Fnow = self.scalar_calc_functional(xg, yg, t)
             er = (Fmin-Fnow)
             error = np.append(error, er)
-            if(i%25==0 and show):
+            if(i%5==0 and show):
                 # plot all steps
                 Z = ZZ_.reshape((len(T), len(E)))
                 fig=pl.figure()
@@ -452,44 +489,60 @@ class plant_model:
         triangles.append([x01, x02, x03])
 
         for i in range(0, max_iteration_number):
+            print("step number {}".format(i))
             # main cycle for optimization iterations
+            print("vector calc")
             ZZ_ = self.vector_calc_fuctional(X_, Y_, t)
+            print("end vector calc")
             # find min of ZZ_
             n_min = np.argmin(ZZ_)
             z_min = np.append(z_min, np.min(ZZ_))
             x_min = np.append(x_min, X_[n_min])
             y_min = np.append(y_min, Y_[n_min])
             # triangle step
+            print("triangle step")
             x1, x2, x3, x_mid = self.triangle_step(triangles[i][0],\
             triangles[i][1], triangles[i][2],t, alpha, beta, gamma)
+            print("triangle step done")
             triangles.append([np.array(x1), np.array(x2), np.array(x3)])
+            print("scalar calc")
             F_now = self.scalar_calc_functional(x_mid[0], x_mid[1], t)
+            print(" end scalar calc")
             #F_min = self.scalar_calc_functional(X_[n_min], Y_[n_min], t)
             F_min = np.min(ZZ_)
             er  = (F_now - F_min)
             error = np.append(error, er)
             if(i%2==0 and show == True):
+
                 # plot all steps
+
                 Z = ZZ_.reshape((len(T), len(E)))
+
                 fig=pl.figure()
+
                 cs = pl.contour(X, Y, Z, 20)
                 pl.clabel(cs, fmt = '%.1f', colors="black")
                 # add a color bar which maps values to colors.
                 fig.colorbar(cs, shrink=0.5, aspect=5)
                 # plotting min point trajectory
+
                 pl.plot(x_min, y_min, "-b")
                 # plotting triangles
                 axes = pl.gca()
+
                 for tr in triangles:
                     draw_triangle(axes, tr[0], tr[1], tr[2])
                 # draw last triangle
+
                 draw_triangle(axes, triangles[i+1][0], triangles[i+1][1], triangles[i+1][2], color_='g')
                 # plotting where is min point now
                 pl.plot(X_[n_min], Y_[n_min], "sk")
                 pl.grid()
                 pl.show()
-            #print(triangles[i][0], triangles[i][1], triangles[i][2], t)
-            #print(x_min[i],  y_min[i])
+
+            print(triangles[i][0], triangles[i][1], triangles[i][2], t)
+            print(x_min[i],  y_min[i])
+            print(F_now , F_min)
             t = t + 5*self.param['dt']
         # at the end of all iterations:
         if(show == True):
@@ -511,6 +564,7 @@ class plant_model:
         return error
 
     def triangle_step(self, p1, p2, p3, t, alpha, beta, gamma):
+        #print("triangle step")
         dt = self.param['dt']
         f1 = self.scalar_calc_functional(p1[0], p1[1], t)
         f2 = self.scalar_calc_functional(p2[0], p2[1], t+dt)
@@ -556,7 +610,7 @@ class plant_model:
             x21 = x_min + 0.5*(x2 - x_min)
             x31 = x_min + 0.5*(x3 - x_min)
             return x11, x21, x31, x_mid
-
+        
         return x5, xs[n_min], xs[n_av], x_mid
 
 
@@ -565,7 +619,8 @@ if __name__ == "__main__":
     # dt is 20 minutes and it is our new time constant
     parameters = {'a':0.0014, 'b':0.175, 'e1':1, 'e2':10, 'k':0.15, 'dt':1}
     plant = plant_model(**parameters)
-    #plant.find_gradient_minimum()
+    print("Start it")
+    #error = plant.find_gradient_minimum(x_start = 5, y_start = 5, show = False)
     #plant.find_conj_gradient_minimum()
     #plant.find_newton_minimum(x_start = 3, y_start = 3)
     #plant.find_triangle_minimum(x_start = 5, y_start = 5)

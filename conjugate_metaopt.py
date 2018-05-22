@@ -18,10 +18,11 @@ if __name__== "__main__":
     p7 = {'a':0.0014, 'b':0.175, 'e1':1, 'e2':10, 'k':0.15, 'dt':1}
     p8 = {'a':0.00055, 'b':0.175, 'e1':1, 'e2':1, 'k':0.15, 'dt':1}
     data = [p1, p2, p3, p4, p5, p6, p7, p8]
-    
+    j = 1
     # start work
     # growing triangle method metaoptimization
     for parameters in data:
+        
         start = time.time()
         #create model of crop
         plant = grow.plant_model(**parameters)
@@ -49,7 +50,8 @@ if __name__== "__main__":
         # save results
         end = time.time()
         results = {'data':parameters, 'errors':errors, 'time':(end-start)}
-        with open('conjugate_metaoptimize_{}.pickle'.format(i), 'wb') as f:
+        with open('conjugate_metaoptimize_{}.pickle'.format(j), 'wb') as f:
             pickle.dump(results, f)
-        with open('conjugate_metaoptimize_double{}.pickle'.format(i), 'wb') as f:
+        with open('conjugate_metaoptimize_double{}.pickle'.format(j), 'wb') as f:
             pickle.dump(results, f)
+        j+=1

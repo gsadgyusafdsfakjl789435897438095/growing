@@ -17,8 +17,10 @@ if __name__== "__main__":
     p6 = {'a':0.00055, 'b':0.175, 'e1':1, 'e2':10, 'k':0.15, 'dt':1}
     p7 = {'a':0.0014, 'b':0.175, 'e1':1, 'e2':10, 'k':0.15, 'dt':1}
     p8 = {'a':0.00055, 'b':0.175, 'e1':1, 'e2':1, 'k':0.15, 'dt':1}
-    data = [p3, p4, p5, p6, p7, p8]
-    j=3
+
+    data = [p1, p2, p3, p4, p5, p6, p7, p8]
+    j=1
+
     # start work
     # growing triangle method metaoptimization
     for parameters in data:
@@ -28,8 +30,8 @@ if __name__== "__main__":
         plant = grow.plant_model(**parameters)
         # fix a cose big boss say this
         a = 1
-        betas = np.arange(0.1, 10, 1)
-        gammas = np.arange(0.1, 10, 1)
+        betas = np.arange(0.1, 100, 9)
+        gammas = np.arange(0.1, 100, 9)
         errors = []
         i = 0
         for b in betas:
@@ -43,8 +45,8 @@ if __name__== "__main__":
         # save results
         end = time.time()
         results = {'data':parameters, 'errors':errors, 'time':(end-start)}
-        with open('triangle_metaoptimize_{}.pickle'.format(j), 'wb') as f:
+        with open('triangle_giant_error_metaoptimize_{}.pickle'.format(j), 'wb') as f:
             pickle.dump(results, f)
-        with open('triangle_metaoptimize_double{}.pickle'.format(j), 'wb') as f:
+        with open('triangle_giant_error_metaoptimize_double_{}.pickle'.format(j), 'wb') as f:
             pickle.dump(results, f)
-        j+=1
+        j = j+1
